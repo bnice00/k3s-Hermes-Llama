@@ -1,0 +1,67 @@
+kubeScheduler:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeEtcd:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    nodeSelector:
+      kubernetes.io/hostname: beachbumhq
+    retention: 45d
+    retentionSize: 8GiB
+    scrapeInterval: 60s
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+grafana:
+  nodeSelector:
+    kubernetes.io/hostname: beachbumhq
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  persistence:
+    enabled: true
+    storageClassName: local-path
+    accessModes: ["ReadWriteOnce"]
+    size: 2Gi
+  service:
+    type: NodePort
+    nodePort: 30300
+
+alertmanager:
+  alertmanagerSpec:
+    nodeSelector:
+      kubernetes.io/hostname: beachbumhq
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi
+
+kubeApiServer:
+  serviceMonitor:
+    metricRelabelings:
+      - sourceLabels: [__name__]
+        regex: '(etcd_request_duration_seconds_bucket|apiserver_request_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket|apiserver_request_sli_duration_seconds_bucket|apiserver_response_sizes_bucket|apiserver_watch_cache_read_wait_seconds_bucket|apiserver_watch_list_duration_seconds_bucket|workqueue_queue_duration_seconds_bucket|workqueue_work_duration_seconds_bucket)'
+        action: drop
+
+kubelet:
+  serviceMonitor:
+    metricRelabelings:
+      - sourceLabels: [__name__]
+        regex: '(etcd_.*_bucket|apiserver_.*_bucket|workqueue_.*_bucket|scheduler_.*_bucket)'
+        action: drop
