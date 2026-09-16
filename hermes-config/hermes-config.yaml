@@ -1,0 +1,284 @@
+model:
+  default: google/gemma-4-26B-A4B
+  provider: custom
+  base_url: http://llama-cpp.llama-farm.svc.cluster.local:8000/v1
+  context_length: 98304
+  discover_models: false
+providers:
+  custom:
+    stale_timeout_seconds: 300
+database:
+  journal_mode: wal
+runtime:
+  nofile_soft_limit: 4096
+agent:
+  max_turns: 500
+  verbose: false
+  reasoning_effort: medium
+  personalities: {}
+terminal:
+  backend: ssh
+  cwd: .
+  timeout: 180
+  home_mode: auto
+  container_cpu: 1
+  container_memory: 5120
+  container_disk: 51200
+  container_persistent: true
+  docker_mount_cwd_to_workspace: false
+  lifetime_seconds: 300
+  ssh_host: deb-serve
+  ssh_user: hermes-agent
+  ssh_key: /etc/hermes-ssh/id_ed25519
+browser:
+  inactivity_timeout: 120
+  extension_control:
+    enabled: false
+  cloud_provider: firecrawl
+tool_loop_guardrails:
+  warnings_enabled: true
+  hard_stop_enabled: false
+  warn_after:
+    exact_failure: 2
+    same_tool_failure: 3
+    idempotent_no_progress: 2
+  hard_stop_after:
+    exact_failure: 5
+    same_tool_failure: 8
+    idempotent_no_progress: 5
+compression:
+  enabled: true
+  checkpoint_required: false
+  progress_notices: false
+  threshold: 0.5
+  threshold_tokens: 60000
+  target_ratio: 0.2
+  protect_last_n: 20
+  min_tail_user_messages: 1
+  max_attempts: 3
+  proactive_prune_tokens: 48000
+  proactive_prune_min_result_chars: 8000
+  proactive_prune_min_reclaim_tokens: 4096
+  protect_first_n: 3
+  codex_gpt55_autoraise: true
+  codex_app_server_auto: native
+  codex_responses_native: false
+  codex_responses_compact_threshold: 200000
+  idle_compact_after_seconds: 0
+prompt_caching:
+  cache_ttl: 5m
+auxiliary:
+  free_only: true
+  enabled: false
+display:
+  compact: false
+  busy_input_mode: interrupt
+  bell_on_complete: false
+  show_reasoning: false
+  background_process_notifications: concise
+  streaming: true
+  skin: default
+  interim_assistant_messages: true
+  platforms:
+    discord:
+      streaming: true
+  tool_progress: all
+  cleanup_progress: false
+  long_running_notifications: true
+  busy_ack_detail: true
+tts:
+  provider: piper
+  piper:
+    voice: en_GB-cori-high
+stt:
+  enabled: true
+  language: en
+  local:
+    model: base
+  openai:
+    model: whisper-1
+    language: en
+    base_url: http://whisper.llama-farm.svc.cluster.local:8080/v1
+  provider: openai
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  memory_char_limit: 5000
+  user_char_limit: 2000
+  nudge_interval: 10
+delegation:
+  max_iterations: 250
+skills:
+  creation_nudge_interval: 15
+plugins:
+  enabled: []
+kanban:
+  review_dispatch: true
+code_execution:
+  timeout: 300
+  max_tool_calls: 50
+tools:
+  tool_search:
+    enabled: 'off'
+gateway:
+  ssh_strict_host_key_checking: false
+streaming:
+  enabled: false
+onboarding:
+  seen:
+    busy_input_prompt: true
+telemetry:
+  shared_metrics:
+    enabled: false
+updates:
+  pre_update_backup: false
+  backup_keep: 5
+  non_interactive_local_changes: stash
+computer_use:
+  backend: cua
+_config_version: 39
+session_reset:
+  mode: none
+  idle_minutes: 1440
+  at_hour: 4
+group_sessions_per_user: true
+platform_toolsets:
+  cli:
+    - clarify
+    - code_execution
+    - cronjob
+    - file
+    - kanban
+    - memory
+    - session_search
+    - skills
+    - stt
+    - terminal
+    - todo
+    - tts
+    - vision
+    - web
+  telegram:
+    - hermes-telegram
+  discord:
+    - browser
+    - clarify
+    - code_execution
+    - computer_use
+    - cronjob
+    - delegation
+    - file
+    - image_gen
+    - memory
+    - session_search
+    - skills
+    - terminal
+    - todo
+    - tts
+    - vision
+    - web
+  whatsapp:
+    - hermes-whatsapp
+  slack:
+    - hermes-slack
+  signal:
+    - hermes-signal
+  homeassistant:
+    - hermes-homeassistant
+  qqbot:
+    - hermes-qqbot
+  yuanbao:
+    - hermes-yuanbao
+  teams:
+    - hermes-teams
+  google_chat:
+    - hermes-google_chat
+platforms:
+  discord:
+    enabled: true
+    home_channel:
+      platform: discord
+      chat_id: '<Your-Hermes-home-channel-id>'
+      name: 'Mount Olympus / #hermes-lair'
+      user_id: '<Your-Discord-user-id>'
+known_plugin_toolsets:
+  discord:
+    - a2a
+    - spotify
+  cli:
+    - a2a
+    - spotify
+known_builtin_toolsets:
+  discord:
+    - browser
+    - clarify
+    - code_execution
+    - computer_use
+    - context_engine
+    - cronjob
+    - delegation
+    - discord
+    - discord_admin
+    - file
+    - homeassistant
+    - image_gen
+    - memory
+    - session_search
+    - skills
+    - spotify
+    - stt
+    - terminal
+    - todo
+    - tts
+    - video
+    - video_gen
+    - vision
+    - web
+    - x_search
+    - yuanbao
+  cli:
+    - browser
+    - clarify
+    - code_execution
+    - computer_use
+    - context_engine
+    - cronjob
+    - delegation
+    - discord
+    - discord_admin
+    - file
+    - homeassistant
+    - image_gen
+    - memory
+    - session_search
+    - skills
+    - spotify
+    - stt
+    - terminal
+    - todo
+    - tts
+    - video
+    - video_gen
+    - vision
+    - web
+    - x_search
+    - yuanbao
+mcp_servers:
+  agentmail:
+    url: https://mcp.agentmail.to/mcp
+    headers:
+      Authorization: Bearer ${MCP_AGENTMAIL_API_KEY}
+    enabled: true
+    tools:
+      include:
+        - list_inboxes
+        - get_inbox
+        - get_attachment
+        - list_messages
+        - send_message
+        - reply_to_message
+        - update_message
+discord:
+  channel_prompts:
+    '<Discord-channel-id>': '<system_prompt_scoped_per_chat_channel>'
+    '<Discord-channel-id>': '<system_prompt_scoped_per_chat_channel>'
