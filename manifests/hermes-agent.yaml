@@ -17,9 +17,21 @@ spec:
       labels:
         app: hermes
     spec:
+      affinity:
+         podAffinity:
+           preferredDuringSchedulingIgnoredDuringExecution:
+             - weight: 100
+               podAffinityTerm:
+                 labelSelector:
+                   matchExpressions:
+                     - key: app
+                       operator: In
+                       values:
+                         - obsidian
+                 topologyKey: kubernetes.io/hostname
       containers:
-      - image: nousresearch/hermes-agent:latest
-        name: hermes-agent
+      - image: a1abeachbum/hermes-kubectl@sha256:f3a6ca7f6dbba6beb81281d89c3fb56d776649af055e851d9d5044c3a32c755c
+        name: hermes-kubectl
         volumeMounts:
         - name: hermes-data
           mountPath: /opt/data
@@ -31,8 +43,14 @@ spec:
             value: "true"
           - name: HERMES_GATEWAY_SSH_STRICT_HOST_KEY_CHECKING
             value: "no"
+          - name: HERMES_WRITE_SAFE_ROOT
+            value: "/opt/data:/home/hermes-agent/vault"
           - name: API_SERVER_HOST
             value: "0.0.0.0"
+          - name: TMPDIR
+            value: "/opt/data/tmp"
+          - name: TZ
+            value: "America/New_York"
         args:
           - "gateway"
           - "run"

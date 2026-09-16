@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: whisper
+  name: whisper
+  namespace: llama-farm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whisper
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: whisper
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: beachbumserve
+      securityContext:
+        supplementalGroups: [991]
+      containers:
+      - image: a1abeachbum/whispervulkan-server@sha256:9694aac7a2b94f1d12254897ba1decf2da0bdd7dffe8c251791887feb122904c
+        imagePullPolicy: IfNotPresent
+        name: whispervulkan-server
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: dri
+          mountPath: /dev/dri
+        args:
+          - "--host"
+          - "0.0.0.0"
+          - "--port"
+          - "8080"
+          - "--model"
+          - "/app/models/ggml-large-v3-turbo.bin"
+          - "--inference-path"
+          - "/v1/audio/transcriptions"
+          - "--convert"
+          - "--tmp-dir"
+          - "/tmp"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 6
+      volumes:
+      - name: dri
+        hostPath:
+          path: /dev/dri
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whisper
+  namespace: llama-farm
+spec:
+  type: ClusterIP
+  selector:
+    app: whisper
+  ports:
+    - name: http
+      port: 8080
+
+
