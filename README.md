@@ -82,7 +82,7 @@ vLLM/ROCM as a factor in my particular case. See the documentation in /benchmark
 
 ### Deployments 1.2
 Within the cluster we run 4 deployment and 1 stateful set scaled to "replicas=1" since this project only requires availability for personal use.
-- (Inference Engine)llama.cpp:server-vulkan, This deployment runs the model weights and serves the openAI endpoint on ClusterIP port:8000 as well as NodePort on port:32300. Available at ghcr.io/ggml-org/llama.cpp:server-vulkan 
+- (Inference Engine)llama.cpp:server-vulkan, This deployment runs the model weights and serves the openAI endpoint on ClusterIP port:8000 as well as NodePort on port:32000. Available at ghcr.io/ggml-org/llama.cpp:server-vulkan 
 The supporting deployments are as follows:      
 - (Agentic Harness)nousresearch/hermes-agent in a modified docker image built by me incorporating kubectl and piper-tts-1.8.0 available on my public docker hub repo at https://hub.docker.com/r/a1abeachbum/hermes-kubectl
 - (STT Provider)a1abeachbum/whispervulkan-server whisper.cpp in the Vulkan-server variation packaged in a docker container by me and available on my public docker-hub repo at https://hub.docker.com/r/a1abeachbum/whispervulkan-server
@@ -326,7 +326,7 @@ to the whole subnet.
 ```bash
 kubectl apply -f manifests/
 ```
--This will create the 3 namespaces first from manifests/00-namespace.yaml,01-namespace.yaml,02-namespace.yaml that this stack lives within and apply all remaining manifests within this directory, replicating my exact setup. 
+-This will create the 2 namespaces first from manifests/01-namespace.yaml,02-namespace.yaml that this stack lives within and apply all remaining manifests within this directory, replicating my exact setup. 
 the GPU device-plugin daemonset (with a nodeSelector modification to keep it off the control-plane iGPU) is included and applied automatically as well.
 
 
