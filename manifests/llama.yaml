@@ -1,11 +1,4 @@
 apiVersion: v1
-kind: Namespace
-metadata:
-  name: llama-farm
-  labels:
-    purpose: hermes-llama
----
-apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: models
