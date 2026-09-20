@@ -326,7 +326,7 @@ to the whole subnet.
 ```bash
 kubectl apply -f manifests/
 ```
--This will create the 2 namespaces first from manifests/01-namespace.yaml,02-namespace.yaml that this stack lives within and apply all remaining manifests within this directory, replicating my exact setup. 
+-This will create the 2 namespaces first from manifests/00-namespace.yaml, manifests/01-namespace.yaml that this stack lives within and apply all remaining manifests within this directory, replicating my exact setup. 
 the GPU device-plugin daemonset (with a nodeSelector modification to keep it off the control-plane iGPU) is included and applied automatically as well.
 
 
@@ -358,7 +358,7 @@ kubectl logs deb-slim-0 -n hermes-lair -f
 
 
 
-> keep in mind to run any kubectl commands against components of this stack you need to add the -n vllm-rocm to declare which namespace to perform the requested operation in.
+> keep in mind to run any kubectl commands against components of this stack you need to add the -n <namespace> to declare which namespace to perform the requested operation in.
 
 > Sudo prefix maybe required when running kubectl commands  depending on your root access. 
 
