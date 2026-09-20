@@ -1,0 +1,13 @@
+monitor:
+  resources:
+    gpu: true
+    nic: false
+
+serviceMonitor:
+  enabled: true
+  attachMetadata:
+    node: true
+  labels:
+    release: kps
+
+

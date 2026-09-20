@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: llama-ingress
+  namespace: llama-farm
+  annotations:
+    cert-manager.io/cluster-issuer: cf-prod
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - llama.<your_domain>.com
+    secretName: llama-tls
+  rules:
+  - host: llama.<your_domain>.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: llama-cpp
+            port:
+              number: 8000
+        path: /
+        pathType: Prefix
+
+

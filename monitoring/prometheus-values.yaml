@@ -24,8 +24,24 @@ prometheus:
               storage: 10Gi
 
 grafana:
+  grafana.ini:
+    server:
+      root_url: https://grafana.<your_domain>.com
+      serve_from_sub_path: false
   nodeSelector:
     kubernetes.io/hostname: beachbumhq
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      cert-manager.io/cluster-issuer: cf-prod
+    hosts:
+      - grafana.<your_domain>.com
+    path: /
+    tls:
+      - hosts:
+          - grafana.<your_domain>.com
+        secretName: grafana-tls
   admin:
     existingSecret: grafana-admin
     userKey: admin-user
@@ -36,8 +52,7 @@ grafana:
     accessModes: ["ReadWriteOnce"]
     size: 2Gi
   service:
-    type: NodePort
-    nodePort: 30300
+    type: ClusterIP
 
 alertmanager:
   alertmanagerSpec:
