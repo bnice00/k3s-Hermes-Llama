@@ -59,6 +59,12 @@ spec:
           - "q8_0"
           - "-ctv"
           - "q8_0"
+          - "--n-predict"
+          - "8192"
+          - "--repeat-penalty"
+          - "1.1"
+          - "--repeat-last-n"
+          - "256"
         ports:
         - containerPort: 8000
         resources:
@@ -77,12 +83,9 @@ metadata:
   name: llama-cpp
   namespace: llama-farm
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: llama-cpp
   ports:
     - name: http
       port: 8000
-      protocol: TCP
-      targetPort: 8000
-      nodePort: 32000
