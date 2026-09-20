@@ -16,6 +16,20 @@ spec:
     spec:
       containers:
       - name: deb-slim
-        image: a1abeachbum/deb-slim-ssh@sha256:6d77365ccbac72e5dbdf35e2f78fea02770ce646bb9fa507c50b27e05aa4898c
+        image: a1abeachbum/deb-slim-ssh@sha256:3b986acd9a152079788dcb5f13630b69ebe42497a04e073054545204f94b83fc
         ports:
           - containerPort: 22
+        env:
+        - name: TZ
+          value: "America/New_York"
+        volumeMounts:
+          - name: hermes-data
+            mountPath: /home/hermes-agent/vault
+            subPath: vaults
+          - name: hermes-data
+            mountPath: /home/hermes-agent/data
+            subPath: data
+      volumes:
+        - name: hermes-data
+          persistentVolumeClaim:
+            claimName: hermes-data

@@ -54,4 +54,13 @@ spec:
     ports:
     - protocol: TCP
       port: 8000
-
+  - to:
+    - podSelector:
+        matchLabels:
+          app: whisper
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: llama-farm
+    ports:
+    - protocol: TCP
+      port: 8080

@@ -1,0 +1,36 @@
+#Example daemon build (.service file extension on daemons)
+#Example is setup to run amdgpu_top on tty2
+[Unit]
+#human readable description
+Description=amdgpu_top GPU monitor on tty2
+
+#after terminal is available 
+After=getty.target
+
+[Service]
+#how systemd decides the service "started".
+Type=simple
+
+#absolute /path/to/tool 
+ExecStart=/usr/bin/amdgpu_top --dark
+
+#real terminal input=tty differs in daemon who dont need a term
+StandardInput=tty
+
+#real terminal output=tty differs in daemon who dont need a term
+StandardOutput=tty
+
+#which terminal selection, in example: tty1=login tty2=radeontop (had to remove tty2 login with sudo)
+TTYPath=/dev/tty2
+#Comes back after stop
+Restart=always
+
+# Pause before restart to avoid crash loop
+RestartSec=3
+
+#ommit user if root needed if not assign a user (not used in this example, just for demo purpose)
+#user=
+
+[Install]
+#normal boot, non graphical services target this is what handles autostart. 
+WantedBy=multi-user.target
