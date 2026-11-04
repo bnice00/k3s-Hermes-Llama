@@ -30,7 +30,7 @@ spec:
                          - obsidian
                  topologyKey: kubernetes.io/hostname
       containers:
-      - image: a1abeachbum/hermes-kubectl@sha256:f3a6ca7f6dbba6beb81281d89c3fb56d776649af055e851d9d5044c3a32c755c
+      - image: a1abeachbum/hermes-kubectl@sha256:48114aeae71fd08523c40e3f0c30360e3aff6a87ca44088d4423c67ec5aec59a
         name: hermes-kubectl
         volumeMounts:
         - name: hermes-data
@@ -41,6 +41,10 @@ spec:
         env:
           - name: API_SERVER_ENABLED
             value: "true"
+          - name: HERMES_DASHBOARD
+            value: "1"
+          - name: HERMES_DASHBOARD_HOST
+            value: "0.0.0.0"
           - name: HERMES_GATEWAY_SSH_STRICT_HOST_KEY_CHECKING
             value: "no"
           - name: HERMES_WRITE_SAFE_ROOT

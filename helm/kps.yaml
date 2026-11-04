@@ -1,0 +1,82 @@
+alertmanager:
+  alertmanagerSpec:
+    nodeSelector:
+      kubernetes.io/hostname: beachbumhq
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 2Gi
+          storageClassName: local-path
+grafana:
+  admin:
+    existingSecret: grafana-admin
+    passwordKey: admin-password
+    userKey: admin-user
+  grafana.ini:
+    server:
+      root_url: https://grafana.<your_domain>.com
+      serve_from_sub_path: false
+  ingress:
+    annotations:
+      cert-manager.io/cluster-issuer: cf-prod
+    enabled: true
+    hosts:
+    - grafana.<your_domain>.com
+    ingressClassName: traefik
+    path: /
+    tls:
+    - hosts:
+      - grafana.<your_domain>.com
+      secretName: grafana-tls
+  nodeSelector:
+    kubernetes.io/hostname: beachbumhq
+  persistence:
+    accessModes:
+    - ReadWriteOnce
+    enabled: true
+    size: 2Gi
+    storageClassName: local-path
+  service:
+    type: ClusterIP
+kubeApiServer:
+  serviceMonitor:
+    metricRelabelings:
+    - action: drop
+      regex: (etcd_request_duration_seconds_bucket|apiserver_request_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket|apiserver_request_sli_duration_seconds_bucket|apiserver_response_sizes_bucket|apiserver_watch_cache_read_wait_seconds_bucket|apiserver_watch_list_duration_seconds_bucket|workqueue_queue_duration_seconds_bucket|workqueue_work_duration_seconds_bucket)
+      sourceLabels:
+      - __name__
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubelet:
+  serviceMonitor:
+    metricRelabelings:
+    - action: drop
+      regex: (etcd_.*_bucket|apiserver_.*_bucket|workqueue_.*_bucket|scheduler_.*_bucket)
+      sourceLabels:
+      - __name__
+prometheus:
+  prometheusSpec:
+    nodeSelector:
+      kubernetes.io/hostname: beachbumhq
+    retention: 45d
+    retentionSize: 8GiB
+    scrapeInterval: 60s
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+          storageClassName: local-path

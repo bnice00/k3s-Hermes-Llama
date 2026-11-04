@@ -10,7 +10,19 @@ spec:
   policyTypes:
   - Ingress
   - Egress
-  ingress: []
+  ingress: 
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: traefik
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: TCP
+      port: 9119 
+    - protocol: TCP
+      port: 8642
   egress:
   - to:
     - podSelector:
@@ -44,6 +56,18 @@ spec:
       port: 80
     - protocol: TCP
       port: 443
+    - protocol: TCP
+      port: 8443
+      # below this line port range for discord voice and video channels (Subject to change!)
+    - protocol: UDP
+      port: 50000
+      endPort: 50032
+    - protocol: UDP
+      port: 19294
+      endPort: 19344
+    - protocol: TCP
+      port: 2000
+      endPort: 2099
   - to:
     - podSelector:
         matchLabels:
@@ -64,3 +88,10 @@ spec:
     ports:
     - protocol: TCP
       port: 8080
+
+  - to:
+    - ipBlock:
+        cidr: 192.168.4.116/32
+    ports:
+    - protocol: TCP
+      port: 8000

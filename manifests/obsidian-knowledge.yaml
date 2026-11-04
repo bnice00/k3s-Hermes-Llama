@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: obsidian-knowledge
+  name: obsidian-knowledge
+  namespace: knowledge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: obsidian-knowledge
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: obsidian-knowledge
+    spec:
+      containers:
+      - image: linuxserver/obsidian@sha256:12765934732c9e7ed7f8b0901003f1e65ec41a6d6c82645f74d9606fae6c94ed
+        name: obsidian-knowledge
+        imagePullPolicy: IfNotPresent
+        envFrom:
+          - secretRef:
+              name: obsidian-auth
+        volumeMounts:
+          - name: knowledge
+            mountPath: /config
+            subPath: obsidian-config
+          - name: knowledge
+            mountPath: /config/vaults
+            subPath: vault
+          - name: dshm
+            mountPath: /dev/shm
+        ports:
+        - containerPort: 3000
+          name: https
+        env:
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: TZ
+            value: "America/New_York"
+      volumes:
+        - name: knowledge
+          persistentVolumeClaim:
+            claimName: knowledge-data
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: obsidian-knowledge-serve 
+  namespace: knowledge
+spec:
+  type: ClusterIP
+  selector:
+    app: obsidian-knowledge
+  ports:
+    - port: 3000
+
+--- 
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: obknowledge-ingress 
+  namespace: knowledge
+  annotations:
+    cert-manager.io/cluster-issuer: cf-staging
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - knowledge.<your_domain>.com
+    secretName: obknowledge-tls
+  rules:
+  - host: knowledge.<your_domain>.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: obsidian-knowledge-serve
+            port:
+              number: 3000
+        path: /
+        pathType: Prefix

@@ -47,9 +47,9 @@ spec:
           name: https
         env:
           - name: PUID
-            value: "1000"
+            value: "10000"
           - name: PGID
-            value: "1000"
+            value: "10000"
           - name: TZ
             value: "America/New_York"
           - name: CUSTOM_USER

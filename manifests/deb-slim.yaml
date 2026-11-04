@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: deb-slim
-        image: a1abeachbum/deb-slim-ssh@sha256:3b986acd9a152079788dcb5f13630b69ebe42497a04e073054545204f94b83fc
+        image: a1abeachbum/deb-slim-ssh@sha256:d786e0dfccd9e6e30f5a562cbc67899575178435b20e0e08e0b691ae2f0af0a4
         ports:
           - containerPort: 22
         env:

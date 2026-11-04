@@ -6,7 +6,7 @@ metadata:
   name: vllm
   namespace: vllm-rocm
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: vllm
@@ -30,9 +30,11 @@ spec:
           - "--model"
           - "ornith-ai/Ornith-1.5-9B"
           - "--max-model-len"
-          - "65536"
+          - "98304"
           - "--max-num-seqs"
-          - "32"
+          - "4"
+          - "--kv-cache-memory"
+          - "3018147328"
           - "--kv-cache-dtype"
           - "fp8"
           - "--reasoning-parser"

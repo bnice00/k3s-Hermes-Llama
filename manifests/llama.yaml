@@ -53,6 +53,13 @@ spec:
           - "1.1"
           - "--repeat-last-n"
           - "256"
+          - "--reasoning-budget"
+          - "512"
+          # below 2 flags to set batch size; 10x speed in prompt process in my case. 
+          - "-b"
+          - "2048"
+          - "-ub"
+          - "2048"
         ports:
         - containerPort: 8000
         resources:

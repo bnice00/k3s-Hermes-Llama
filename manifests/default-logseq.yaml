@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: logseq
+  name: logseq
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logseq
+  template:
+    metadata:
+      labels:
+        app: logseq
+    spec:
+      containers:
+      - image: ghcr.io/logseq/logseq-webapp:latest
+        name: logseq-webapp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: logseq
+  name: logseq
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: logseq
+  ports:
+  - name: webapp
+    port: 3001
+    protocol: TCP
+    targetPort: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: interal
+  namespace: default
+data:
+  index.html: <h1>configmap hates you<h1>

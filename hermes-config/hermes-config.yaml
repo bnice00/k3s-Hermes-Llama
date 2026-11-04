@@ -2,8 +2,8 @@ model:
   default: google/gemma-4-26B-A4B
   provider: custom
   base_url: http://llama-cpp.llama-farm.svc.cluster.local:8000/v1
-  context_length: 98304
   discover_models: false
+  api_mode: chat_completions
 providers:
   custom:
     stale_timeout_seconds: 300
@@ -36,7 +36,7 @@ browser:
     enabled: false
   cloud_provider: firecrawl
 tool_loop_guardrails:
-  warnings_enabled: true
+  warnings_enabled: false
   hard_stop_enabled: false
   warn_after:
     exact_failure: 2
@@ -46,12 +46,13 @@ tool_loop_guardrails:
     exact_failure: 5
     same_tool_failure: 8
     idempotent_no_progress: 5
+  non_interactive_hard_stop_enabled: false
 compression:
   enabled: true
   checkpoint_required: false
   progress_notices: false
   threshold: 0.5
-  threshold_tokens: 60000
+  threshold_tokens: '60000'
   target_ratio: 0.2
   protect_last_n: 20
   min_tail_user_messages: 1
@@ -68,11 +69,11 @@ compression:
 prompt_caching:
   cache_ttl: 5m
 auxiliary:
-  free_only: true
+  free_only: false
   enabled: false
 display:
   compact: false
-  busy_input_mode: interrupt
+  busy_input_mode: steer
   bell_on_complete: false
   show_reasoning: false
   background_process_notifications: concise
@@ -86,10 +87,14 @@ display:
   cleanup_progress: false
   long_running_notifications: true
   busy_ack_detail: true
+  personality: kawaii
 tts:
-  provider: piper
-  piper:
-    voice: en_GB-cori-high
+  provider: openai
+  openai:
+    model: kitten-tts-2-latest
+    voice: Rosie
+    speed: 1.0
+    base_url: http://kitten-tts.hermes-lair.svc.cluster.local:8000/v1
 stt:
   enabled: true
   language: en
@@ -100,6 +105,7 @@ stt:
     language: en
     base_url: http://whisper.llama-farm.svc.cluster.local:8080/v1
   provider: openai
+  streaming: true
 memory:
   memory_enabled: true
   user_profile_enabled: true
@@ -111,7 +117,10 @@ delegation:
 skills:
   creation_nudge_interval: 15
 plugins:
-  enabled: []
+  enabled:
+    - conduit_push
+    - homeassistant
+  disabled: []
 kanban:
   review_dispatch: true
 code_execution:
@@ -129,14 +138,16 @@ onboarding:
     busy_input_prompt: true
 telemetry:
   shared_metrics:
-    enabled: false
+    enabled: true
+    send: false
+    offer_version: 2
 updates:
   pre_update_backup: false
   backup_keep: 5
   non_interactive_local_changes: stash
 computer_use:
   backend: cua
-_config_version: 39
+_config_version: 51
 session_reset:
   mode: none
   idle_minutes: 1440
@@ -146,6 +157,8 @@ platform_toolsets:
   cli:
     - clarify
     - code_execution
+    - conduit
+    - connections
     - cronjob
     - file
     - kanban
@@ -165,6 +178,7 @@ platform_toolsets:
     - clarify
     - code_execution
     - computer_use
+    - connections
     - cronjob
     - delegation
     - file
@@ -198,22 +212,29 @@ platforms:
     enabled: true
     home_channel:
       platform: discord
-      chat_id: '<Your-Hermes-home-channel-id>'
+      chat_id: '1544890380942843964'
       name: 'Mount Olympus / #hermes-lair'
-      user_id: '<Your-Discord-user-id>'
+      user_id: '578039280866164745'
 known_plugin_toolsets:
   discord:
     - a2a
+    - homeassistant
     - spotify
   cli:
     - a2a
-    - spotify
+    - conduit
+    - homeassistant
+  acp:
+    - homeassistant
+  webhook:
+    - homeassistant
 known_builtin_toolsets:
   discord:
     - browser
     - clarify
     - code_execution
     - computer_use
+    - connections
     - context_engine
     - cronjob
     - delegation
@@ -241,18 +262,18 @@ known_builtin_toolsets:
     - clarify
     - code_execution
     - computer_use
+    - connections
     - context_engine
     - cronjob
     - delegation
     - discord
     - discord_admin
     - file
-    - homeassistant
     - image_gen
+    - kanban
     - memory
     - session_search
     - skills
-    - spotify
     - stt
     - terminal
     - todo
@@ -280,5 +301,45 @@ mcp_servers:
         - update_message
 discord:
   channel_prompts:
-    '<Discord-channel-id>': '<system_prompt_scoped_per_chat_channel>'
-    '<Discord-channel-id>': '<system_prompt_scoped_per_chat_channel>'
+    '1549428478535925800': 'You are a concrete admixture expert, answer clear and direct about all questions regarding concrete. ## Admixture product finder (Chryso USA)
+
+      Data lives on the SSH backend (deb-slim-0):
+
+      - Dataset: /home/hermes-agent/data/crosswalk_base.csv  (source of truth, 194 rows)
+
+      - Field guide: /home/hermes-agent/data/README.md  — read it before the first query in a session
+
+      - Product notes: /home/hermes-agent/vault/cerebrum/Chryso Products/  — start at 00 Chryso Product Index.md
+
+
+      When asked about Chryso products:
+
+      1. For lists, filters, counts or exact values, query the CSV over SSH (e.g. python3 csv / awk). Do not answer list questions from memory or notes alone.
+
+      2. A blank field means the data sheet does not state it. Say so. Never estimate a value.
+
+      3. Quote product_url or source_pdf for specs, and the date stamp for any TxDOT/FDOT approval.
+
+      4. Florida work: only products with fdot_apl populated; quote the APL number for the type in use (Type A and Type F have different numbers).
+
+      5. If TDS and TxDOT dosage differ, state both.
+
+      6. Never propose a flagged product (air-detrainer, experimental, water-repellent, cleaner) without stating the flag.
+
+      7. Substitutions are trial-batch candidates, never drop-in equivalents.
+
+      8. Chryso''s US line has no topical sealers/silanes. Say so rather than stretching an admixture to fit.'
+approvals:
+  destructive_slash_confirm: false
+_left_core_scoped:
+  - homeassistant
+_left_core_installed:
+  - homeassistant
+dashboard:
+  public_url: https://hermes.<your_domain>.com
+timezone: America/New_York
+fallback_providers:
+  - OpenRouter
+cron:
+  model_provider: openrouter
+  model: mistralai/mistral-large-4-0

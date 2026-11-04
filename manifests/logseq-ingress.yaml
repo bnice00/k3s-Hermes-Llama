@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: logseq-ingress
+  namespace: knowledge
+  annotations:
+    cert-manager.io/cluster-issuer: cf-prod
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - logseq.<your_domain>.com
+    secretName: logseq-tls
+  rules:
+  - host: logseq.<your_domain>.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: logseq
+            port:
+              number: 3001
+        path: /
+        pathType: Prefix

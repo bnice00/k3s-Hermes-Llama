@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hermes-ingress
+  namespace: hermes-lair
+  annotations:
+    cert-manager.io/cluster-issuer: cf-prod
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - hermes.<your_domain>.com
+    secretName: hermes-tls
+  rules:
+  - host: hermes.<your_domain>.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: hermes-serve
+            port:
+              number: 9119
+        path: /
+        pathType: Prefix

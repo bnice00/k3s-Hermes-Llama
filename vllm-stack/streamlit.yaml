@@ -6,7 +6,7 @@ metadata:
   name: streamlit
   namespace: vllm-rocm
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: streamlit
@@ -20,6 +20,7 @@ spec:
       containers:
       - image: a1abeachbum/streamlit_vllm_py@sha256:1fef004f8fe1660a793ae9ac50fe99fca7b87cddaf97644af99931738601dbb8
         name: streamlit-vllm-py-qcf4t
+        resources: {}
         ports:
         - containerPort: 8501
         env:
@@ -32,3 +33,4 @@ spec:
               key: apiKey
       imagePullSecrets:
        - name: regcred
+status: {}

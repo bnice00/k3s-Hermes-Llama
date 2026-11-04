@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: logseq
+  name: logseq
+  namespace: knowledge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logseq
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: logseq
+    spec:
+      containers:
+      - image: ghcr.io/logseq/logseq-webapp:latest
+        name: logseq-webapp
+status: {}

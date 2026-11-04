@@ -9,8 +9,8 @@ spec:
   ports:
   - name: openapi
     port: 8642
-    protocol: TCP
-    targetPort: 8642
+  - name: dash
+    port: 9119 
   selector:
     app: hermes
   type: ClusterIP
