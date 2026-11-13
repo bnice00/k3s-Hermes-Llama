@@ -1,0 +1,4 @@
+Host forgejo
+  HostName forgejo-ssh.forgejo.svc.cluster.local
+  User git
+  IdentityFile ~/.ssh/id_ed25519
