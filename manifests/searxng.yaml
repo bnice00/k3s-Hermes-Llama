@@ -3,30 +3,61 @@ kind: Namespace
 metadata:
   name: sear-search
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: searxng-settings
+  namespace: sear-search
+data:
+  settings.yml: |
+    use_default_settings: true
+    server:
+      limiter: false
+      public_instance: false
+      image_proxy: false
+    search:
+      formats:
+        - html
+        - json
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: searxng
-  namespace: sear-search
   labels:
     app: searxng
+  name: searxng
+  namespace: sear-search
 spec:
   replicas: 1
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: searxng
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
         app: searxng
     spec:
       containers:
-        - name: searxng
-          image: searxng/searxng:latest
-          ports:
-            - containerPort: 8080
+      - image: searxng/searxng:latest      # swap for @sha256:... pin
+        name: searxng
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SEARXNG_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: searxng-secret
+              key: SEARXNG_SECRET
+        volumeMounts:
+        - name: settings
+          mountPath: /etc/searxng/settings.yml
+          subPath: settings.yml
+      volumes:
+      - name: settings
+        configMap:
+          name: searxng-settings
 ---
 apiVersion: v1
 kind: Service
