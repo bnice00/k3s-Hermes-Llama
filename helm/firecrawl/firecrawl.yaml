@@ -1,0 +1,13 @@
+image:
+  repository: ghcr.io/firecrawl/firecrawl
+  tag: "latest"
+  pullPolicy: IfNotPresent
+playwright:
+  repository: ghcr.io/firecrawl/playwright-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+nuqPostgres:
+  image:
+    repository: ghcr.io/firecrawl/nuq-postgres
+    tag: "latest"
+    pullPolicy: IfNotPresent

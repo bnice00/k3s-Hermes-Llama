@@ -95,3 +95,23 @@ spec:
     ports:
     - protocol: TCP
       port: 8000
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: sear-search
+      podSelector:
+        matchLabels:
+          app: searxng
+    ports:
+    - port: 8080
+      protocol: TCP
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: firecrawl
+      podSelector:
+        matchLabels:
+          app: firecrawl-api
+    ports:
+    - port: 3002
+      protocol: TCP

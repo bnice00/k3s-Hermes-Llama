@@ -1,0 +1,41 @@
+nodeSelector:
+  kubernetes.io/hostname: beachbumhq
+
+persistence:
+  enabled: true
+  create: false          # use your claim, don't make one
+  claimName: forgejo-data
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: cf-prod
+  hosts:
+    - host: git.a1abeachbum.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: git-tls
+      hosts:
+        - git.a1abeachbum.com
+
+service:
+  ssh:
+    type: NodePort
+    nodePort: 30022      # hq's sshd already owns 22
+
+gitea:
+  admin:
+    existingSecret: forgejo-admin
+    email: you@example.com
+    passwordMode: initialOnlyNoReset
+  config:
+    server:
+      DOMAIN: git.a1abeachbum.com
+      ROOT_URL: https://git.a1abeachbum.com/
+      SSH_DOMAIN: git.a1abeachbum.com
+      SSH_PORT: 30022    # the port shown in clone URLs
+    service:
+      DISABLE_REGISTRATION: true   # only you create accounts

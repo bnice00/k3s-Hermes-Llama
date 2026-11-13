@@ -1,0 +1,10 @@
+resources:
+  - all.yaml
+patches:
+  - target:
+      kind: "Deployment|StatefulSet"
+    patch: |-
+      - op: add
+        path: /spec/template/spec/nodeSelector
+        value:
+          kubernetes.io/hostname: beachbumhq

@@ -43,3 +43,15 @@ spec:
        port: 53
      - protocol: UDP
        port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: forgejo
+      podSelector:
+        matchLabels:
+          app: forgejo
+    ports:
+    - protocol: TCP
+      port: 2222
+    - protocol: TCP
+      port: 3000
