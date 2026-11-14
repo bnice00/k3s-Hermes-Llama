@@ -1,0 +1,5 @@
+apiVersion: v2
+name: knowledge
+description: Brock's Obsidian vault + Syncthing hub
+type: application
+version: 0.1.0

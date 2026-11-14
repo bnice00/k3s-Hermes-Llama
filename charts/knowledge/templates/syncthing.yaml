@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syncthing
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "knowledge.labels" (dict "app" "syncthing" "root" $) | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: syncthing
+  template:
+    metadata:
+      labels:
+        {{- include "knowledge.labels" (dict "app" "syncthing" "root" $) | nindent 8 }}
+    spec:
+      hostname: {{ .Values.syncthing.hostname }}
+      containers:
+        - name: syncthing
+          image: {{ include "knowledge.image" .Values.syncthing.image | quote }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PUID
+              value: {{ .Values.puid | quote }}
+            - name: PGID
+              value: {{ .Values.pgid | quote }}
+            - name: TZ
+              value: {{ .Values.timezone | quote }}
+          ports:
+            - { name: gui, containerPort: 8384, protocol: TCP }
+            - { name: sync-tcp, containerPort: 22000, protocol: TCP }
+            - { name: sync-udp, containerPort: 22000, protocol: UDP }
+          volumeMounts:
+            - name: knowledge
+              mountPath: /config
+              subPath: config
+            - name: knowledge
+              mountPath: /data1
+              subPath: vault
+      volumes:
+        - name: knowledge
+          persistentVolumeClaim:
+            claimName: {{ .Values.data.name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: syncthing
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "knowledge.labels" (dict "app" "syncthing" "root" $) | nindent 4 }}
+spec:
+  type: NodePort
+  selector:
+    app: syncthing
+  ports:
+    - { name: gui, port: 8384, targetPort: gui, protocol: TCP, nodePort: {{ .Values.syncthing.nodePorts.gui }} }
+    - { name: sync-tcp, port: 22000, targetPort: sync-tcp, protocol: TCP, nodePort: {{ .Values.syncthing.nodePorts.sync }} }
+    - { name: sync-udp, port: 22000, targetPort: sync-udp, protocol: UDP, nodePort: {{ .Values.syncthing.nodePorts.sync }} }

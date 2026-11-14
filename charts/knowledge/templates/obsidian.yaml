@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: obsidian-knowledge
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "knowledge.labels" (dict "app" "obsidian-knowledge" "root" $) | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: obsidian-knowledge
+  template:
+    metadata:
+      labels:
+        {{- include "knowledge.labels" (dict "app" "obsidian-knowledge" "root" $) | nindent 8 }}
+    spec:
+      containers:
+        - name: obsidian-knowledge
+          image: {{ include "knowledge.image" .Values.obsidian.image | quote }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.obsidian.port }}
+              name: http
+          env:
+            - name: PUID
+              value: {{ .Values.puid | quote }}
+            - name: PGID
+              value: {{ .Values.pgid | quote }}
+            - name: TZ
+              value: {{ .Values.timezone | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.obsidian.authSecret }}
+          volumeMounts:
+            - name: knowledge
+              mountPath: /config
+              subPath: obsidian-config
+            - name: knowledge
+              mountPath: /config/vaults
+              subPath: vault
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: knowledge
+          persistentVolumeClaim:
+            claimName: {{ .Values.data.name }}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: obsidian-knowledge-serve
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "knowledge.labels" (dict "app" "obsidian-knowledge" "root" $) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: obsidian-knowledge
+  ports:
+    - port: {{ .Values.obsidian.port }}
+{{- with .Values.obsidian.ingress }}
+{{- if .enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: obknowledge-ingress
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "knowledge.labels" (dict "app" "obsidian-knowledge" "root" $) | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .clusterIssuer }}
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - {{ .host }}
+      secretName: {{ .tlsSecret }}
+  rules:
+    - host: {{ .host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: obsidian-knowledge-serve
+                port:
+                  number: {{ $.Values.obsidian.port }}
+{{- end }}
+{{- end }}

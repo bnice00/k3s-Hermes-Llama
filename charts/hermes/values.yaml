@@ -1,7 +1,7 @@
 timezone: America/New_York
 
 data:
-  pvcName: hermes-data      # shared with obsidian/syncthing (knowledge chart references it)
+  pvcName: hermes-data      # shared with obsidian/syncthing (knowledge)
   size: 20Gi
   storageClass: local-path
 
@@ -29,3 +29,16 @@ debSlim:
 kittenTts:                  # runs in podman on my gaming rig, not in the cluster
   address: 192.168.4.116
   port: 8000
+
+obsidian:
+  image:
+    repository: linuxserver/obsidian
+    tag: ""
+    digest: "sha256:12765934732c9e7ed7f8b0901003f1e65ec41a6d6c82645f74d9606fae6c94ed"
+  authSecret: obsidian-auth     # keys: CUSTOM_USER, PASSWORD
+  port: 3001
+  ingress:
+    enabled: true
+    host: obsidian.a1abeachbum.com
+    clusterIssuer: cf-prod
+    tlsSecret: obsidian-tls

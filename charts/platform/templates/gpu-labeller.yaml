@@ -1,0 +1,85 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cr-node-labeller
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["watch", "get", "list", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: labeller
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cr-node-labeller
+subjects:
+  - kind: ServiceAccount
+    name: node-labeller-sa
+    namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: node-labeller-sa
+  namespace: kube-system
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: amdgpu-labeller-daemonset
+  namespace: kube-system
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      name: amdgpu-lr-ds
+  template:
+    metadata:
+      labels:
+        name: amdgpu-lr-ds
+        {{- include "platform.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: node-labeller-sa
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      priorityClassName: system-node-critical
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+      containers:
+        - name: amdgpu-lr-cntr
+          image: {{ include "platform.image" .Values.gpu.labeller.image | quote }}
+          imagePullPolicy: IfNotPresent
+          workingDir: /root
+          command: ["./k8s-node-labeller"]
+          args: ["-vram", "-cu-count", "-simd-count", "-device-id", "-family", "-product-name"]
+          env:
+            - name: DS_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          securityContext:
+            privileged: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: sys
+              mountPath: /sys
+              readOnly: true
+            - name: dev
+              mountPath: /dev
+      volumes:
+        - name: sys
+          hostPath: { path: /sys, type: Directory }
+        - name: dev
+          hostPath: { path: /dev, type: Directory }

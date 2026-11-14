@@ -1,0 +1,26 @@
+# name: extra labels. Every namespace gets helm.sh/resource-policy: keep
+namespaces:
+  cert-man: {}
+  firecrawl: {}
+  forgejo: { name: forgejo }
+  hermes-lair: {}
+  knowledge: {}
+  kube-amd-gpu: { name: kube-amd-gpu }
+  llama-farm: { purpose: hermes-llama }
+  monitoring: { name: monitoring }
+  sear-search: {}
+
+certIssuers:
+  enabled: true            # false on a fresh cluster until cert-manager's CRDs exist
+  email: brocktoller@gmail.com
+  domain: a1abeachbum.com
+  cloudflareSecret: cfapi
+  cloudflareKey: apiToken
+  accountKeySecret: certman-acckey
+
+gpu:
+  family: GC_11_0_0        # 7900 XTX.
+  plugin:
+    image: { repository: rocm/k8s-device-plugin, tag: latest, digest: "sha256:b2987085ab9edb0d54edcade2068825d6f1d9b1134a52e196442909d117396ec" }
+  labeller:
+    image: { repository: rocm/k8s-device-plugin, tag: labeller-latest, digest: "sha256:83db248c625afbfce211704ab1d13e63dd8ac63b22f6f4be993fe5d0aa6d64f8" }

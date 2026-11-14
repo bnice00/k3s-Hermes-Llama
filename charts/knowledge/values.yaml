@@ -1,0 +1,32 @@
+timezone: America/New_York
+puid: "1000"
+pgid: "1000"
+
+data:
+  name: knowledge-data
+  size: 25Gi
+  hostPath: /home/brock/knowledge/logseq   # This IS the Obsidian vault
+  node: beachbumhq
+
+obsidian:
+  image:
+    repository: linuxserver/obsidian
+    tag: ""
+    digest: "sha256:12765934732c9e7ed7f8b0901003f1e65ec41a6d6c82645f74d9606fae6c94ed"
+  authSecret: obsidian-auth                # keys: CUSTOM_USER, PASSWORD
+  port: 3000                               # plain HTTP; Traefik does TLS
+  ingress:
+    enabled: true
+    host: knowledge.a1abeachbum.com
+    clusterIssuer: cf-prod
+    tlsSecret: obknowledge-tls
+
+syncthing:
+  image:
+    repository: lscr.io/linuxserver/syncthing
+    tag: latest
+    digest: "sha256:5c1276a655498fb9774e22e42ceeb5279eb2d7c46e3c209ce8285a7b0bae4925"
+  hostname: knowledge-hub
+  nodePorts:
+    gui: 32384
+    sync: 32200

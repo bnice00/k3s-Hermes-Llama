@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: obsidian
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "obsidian" "root" $) | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: obsidian
+  template:
+    metadata:
+      labels:
+        {{- include "hermes.labels" (dict "app" "obsidian" "root" $) | nindent 8 }}
+    spec:
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: ["hermes"]
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: obsidian
+          image: {{ include "hermes.image" .Values.obsidian.image | quote }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.obsidian.port }}
+              name: https
+          env:
+            - name: PUID
+              value: "10000"
+            - name: PGID
+              value: "10000"
+            - name: TZ
+              value: {{ .Values.timezone | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.obsidian.authSecret }}
+          volumeMounts:
+            - name: hermes-data
+              mountPath: /config
+              subPath: obsidian-config
+            - name: hermes-data
+              mountPath: /config/vaults
+              subPath: vaults
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: hermes-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.data.pvcName }}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: obsidian-serve
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "obsidian" "root" $) | nindent 4 }}
+  annotations:
+    # backend is HTTPS with a self-signed cert → use the skip-verify transport below
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: {{ .Release.Namespace }}-lair-tlsbypass@kubernetescrd
+spec:
+  type: ClusterIP
+  selector:
+    app: obsidian
+  ports:
+    - port: {{ .Values.obsidian.port }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: lair-tlsbypass
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "obsidian" "root" $) | nindent 4 }}
+spec:
+  insecureSkipVerify: true
+{{- with .Values.obsidian.ingress }}
+{{- if .enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: obsidian-ingress
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "obsidian" "root" $) | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .clusterIssuer }}
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - {{ .host }}
+      secretName: {{ .tlsSecret }}
+  rules:
+    - host: {{ .host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: obsidian-serve
+                port:
+                  number: {{ $.Values.obsidian.port }}
+{{- end }}
+{{- end }}

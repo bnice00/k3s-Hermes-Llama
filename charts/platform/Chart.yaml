@@ -1,0 +1,5 @@
+apiVersion: v2
+name: platform
+description: Namespaces, cert-manager ClusterIssuers, AMD GPU device plugin + labeller
+type: application
+version: 0.1.0
