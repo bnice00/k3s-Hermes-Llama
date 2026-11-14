@@ -87,17 +87,18 @@ hq gets backed up every night with restic to an external SSD (k3s server state, 
 
 ### Deployments 1.2
 Everything in the cluster is scaled to "replicas=1" since this project only requires availability for personal use.
-- (Inference Engine) llama.cpp:server-vulkan. This deployment runs the model weights and serves the OpenAI endpoint on ClusterIP port:8000 as well as NodePort on port:32000. Available at ghcr.io/ggml-org/llama.cpp:server-vulkan
+- (Inference Engine) llama.cpp:server-vulkan. This deployment runs the model weights and serves the OpenAI endpoint on ClusterIP port:8000, with the WebUI behind Traefik at llama.<my_domain>.com. Available at ghcr.io/ggml-org/llama.cpp:server-vulkan
 
 The supporting deployments are as follows:
 - (Agentic Harness) nousresearch/hermes-agent in a modified docker image built by me incorporating kubectl and piper-tts-1.8.0, available on my public docker hub repo at https://hub.docker.com/r/a1abeachbum/hermes-kubectl
 - (STT Provider) a1abeachbum/whispervulkan-server, whisper.cpp in the Vulkan-server variation packaged in a docker container by me and available at https://hub.docker.com/r/a1abeachbum/whispervulkan-server
 - (Agent Sandbox) a1abeachbum/deb-slim-ssh (stateful-set). Debian trixie slim image that acts as Hermes's workspace. It now carries a dev toolbox (git, tea, uv, node/npm, build-essential, ripgrep, jq) so Hermes can clone, code, test and open PRs on its own. Available at https://hub.docker.com/r/a1abeachbum/deb-slim-ssh
-- (RAG memory) linuxserver/obsidian. Obsidian instance for Hermes, a collection of skills and memories recorded as .md files for the agent to retrieve and review based on the scope of the task requested. Syncthing runs next to it to keep the vault synced to my devices. https://hub.docker.com/r/linuxserver/obsidian
+- (RAG memory) linuxserver/obsidian. Obsidian instance for Hermes, a collection of skills and memories recorded as .md files for the agent to retrieve and review based on the scope of the task requested. https://hub.docker.com/r/linuxserver/obsidian
+- (My notes) a second linuxserver/obsidian instance in its own namespace that is just for me, with Syncthing next to it keeping the vault synced to my phone. Hermes can't touch this one.
 - (Web search) searxng/searxng with JSON output turned on, used as Hermes's web_search backend.
 - (Web extract) self-hosted Firecrawl installed from the Helm chart in the Firecrawl repo, used as Hermes's web_extract backend. The chart has no nodeSelector option so I pin it to hq with a Helm 4 post-renderer plugin (helm/firecrawl).
 - (Git) Forgejo from the official Helm chart with its data on my NAS drives. Hermes has its own bot user that can push branches and open PRs in one org, but it can't push to main, can't create repos and can't merge. Everything it does comes to me as a PR.
-- (TTS) KittenTTS runs off-cluster on my gaming rig. Hermes reaches it through a selectorless Service + EndpointSlice (kitten-tts-serve.yaml / kitten-tts-eps.yaml).
+- (TTS) KittenTTS runs off-cluster on my gaming rig. Hermes reaches it through a selectorless Service + EndpointSlice in the hermes chart. The rig's IP is one value (kittenTts.address) that feeds both the EndpointSlice and the NetworkPolicy.
 
 Additionally, I added monitoring to the cluster with the kube-prometheus-stack public helm chart. To replicate my configuration it can be applied with the following commands and the values file located at /helm/kps.yaml:
 ### Add the repo
@@ -135,12 +136,12 @@ kubectl get pv -n monitoring
 
 ### Services & Exposure 1.3
 Most services are reached through Traefik ingress on subdomains of my own domain, with TLS certs from cert-manager using the Cloudflare DNS challenge. The DNS records point at LAN addresses so nothing
-in this repo is exposed to the internet, and I use Tailscale to reach it when I'm away from home. Llama.cpp (32000) and Obsidian (32300) are also still on NodePorts as a fallback.
+in this repo is exposed to the internet, and I use Tailscale to reach it when I'm away from home. The only NodePorts left are Syncthing's (32384 for the GUI, 32200 TCP/UDP for device sync) since my phone has to reach it directly.
 **Minimizing the attack surface by only exposing the services that require interaction was my main priority. Everything else stays internal to the cluster on ClusterIP.
 
 
 ### Network Policies 1.4
-Hermes and its sandbox both run behind NetworkPolicies that deny everything by default (manifests/hermes-netpol.yaml, manifests/deb-slim-net.yaml). Hermes can only reach DNS, the sandbox over SSH,
+Hermes and its sandbox both run behind NetworkPolicies that deny everything by default (charts/hermes/templates/netpol-hermes.yaml, netpol-deb-slim.yaml). Hermes can only reach DNS, the sandbox over SSH,
 the internet with all private ranges blocked, llama.cpp, whisper, SearXNG, Firecrawl and the TTS rig. The sandbox is blocked from my LAN and can reach Forgejo for git.
 
 One thing that tripped me up: NetworkPolicy ports are the pod's port, not the Service port, because the policy gets checked after the Service translates it. SearXNG's Service is on 8181 but the policy has to allow 8080.
@@ -148,6 +149,20 @@ One thing that tripped me up: NetworkPolicy ports are the pod's port, not the Se
 
 ### Hermes git workflow 1.5
 Hermes works issues from Forgejo with a skill I wrote: clone, branch, commit, push, then open a PR with tea. Branch protection on main means I review and merge everything. I tested it end to end on local Gemma and it ran clean.
+
+
+### Helm charts 1.6
+Everything in the cluster is now managed by Helm. My own charts live in /charts and are split by what they do instead of one big umbrella chart, since each piece gets updated on its own schedule:
+- platform: namespaces, cert-manager ClusterIssuers, AMD GPU device plugin + labeller
+- inference: llama.cpp + whisper
+- hermes: Hermes, the deb-slim sandbox, Hermes's Obsidian, both NetworkPolicies, the KittenTTS pointer
+- searxng
+- knowledge: my Obsidian + Syncthing
+
+Upstream charts (cert-manager, kube-prometheus-stack, the GPU exporter, Forgejo, Firecrawl) only get a values file in /helm with my overrides.
+
+A few rules I stuck to: every PVC and namespace has `helm.sh/resource-policy: keep` so an uninstall can never delete my data, every image is pinned by digest, and secrets are never in a chart. They get created by hand from the templates in /secrets.
+I moved the live apps into Helm without redeploying anything by keeping every name and selector the same and labeling the existing objects as Helm owned. The old raw manifests are in /historic.
 
 
 ## Requirements 2.0
@@ -288,8 +303,6 @@ the pod runs on. Allow the NodePort on whichever node you browse to.
 | 8472 | udp | Anywhere | flannel VXLAN overlay |
 | 10250 | tcp | Anywhere | kubelet (scraped by Prometheus) |
 | 9100 | tcp | `<control_plane_ip>` | node-exporter scrape |
-| `<llama_nodeport>` | tcp | `192.168.4.0/24` | llama.cpp WebUI / OpenAI endpoint |
-| `<obsidian_nodeport>` | tcp | `192.168.4.0/24` | Obsidian vault UI |
 | — | — | `10.42.0.0/16` | pod network |
 | — | — | `10.43.0.0/16` | service network |
 
@@ -318,27 +331,49 @@ to the whole subnet.
 
 ## Run Commands 3.0
 
-### Apply manifests
+### Rebuild order
+Order matters on a fresh cluster. platform creates the namespaces everything else lives in, but its ClusterIssuers need cert-manager's CRDs, so platform goes in twice.
 
 ```bash
-kubectl apply -f manifests/
+helm upgrade --install platform charts/platform -n kube-system --set certIssuers.enabled=false
 ```
--This creates the namespaces first and then applies all remaining manifests in this directory, replicating my exact setup.
-The GPU device-plugin daemonset (with a nodeSelector modification to keep it off the control-plane iGPU) is included and applied automatically as well.
+-namespaces + GPU device plugin first. The release lives in kube-system so it can never delete its own namespace.
 
-### Helm releases
+```bash
+helm repo add jetstack https://charts.jetstack.io && helm repo update
+helm upgrade --install cert-manager jetstack/cert-manager --version v1.21.2 -n cert-man -f helm/cert-manager.yaml
+helm upgrade --install platform charts/platform -n kube-system
+```
+-cert-manager, then platform again to turn the ClusterIssuers on.
 
--cert-manager, kube-prometheus-stack, the AMD GPU exporter and Forgejo install from their upstream charts with the values files in /helm. Values files only hold my overrides, not the full defaults.
+-Create the secrets from the templates in /secrets.
 
--Firecrawl installs from the chart inside the Firecrawl repo (pinned to release v2.11.162) with a post-renderer plugin that pins it to hq:
+-kube-prometheus-stack (see 1.2), the AMD GPU exporter and Forgejo install from their upstream charts with the values files in /helm.
+
+-Firecrawl installs from the chart inside the Firecrawl repo (pinned to release v2.11.162) with a post-renderer plugin that pins it to hq, since the chart has no nodeSelector option:
 
 ```bash
 helm plugin install helm/firecrawl/firecrawl-postrender
-```
-```bash
 helm install firecrawl <path_to_firecrawl_repo>/examples/kubernetes/firecrawl-helm -n firecrawl \
   -f helm/firecrawl/firecrawl.yaml -f secrets/firecrawl-values.yaml --post-renderer hq-pin
 ```
+
+```bash
+helm upgrade --install inference charts/inference -n llama-farm
+helm upgrade --install hermes charts/hermes -n hermes-lair
+helm upgrade --install searxng charts/searxng -n sear-search
+helm upgrade --install knowledge charts/knowledge -n knowledge
+```
+-my own charts last.
+
+-Before any install or upgrade I check what it will actually change against the live cluster:
+
+```bash
+helm template <release> charts/<chart> -n <namespace> | kubectl diff -f -
+```
+-`helm lint` only checks that the chart renders. `kubectl diff` validates against the cluster and catches typos in field names.
+
+> If an upgrade fails with a conflict naming `kubectl-client-side-apply`, the field was originally created with kubectl apply. Add `--force-conflicts` to let Helm take it over.
 
 
 ### After everything is applied verify with:
@@ -366,6 +401,9 @@ kubectl logs deb-slim-0 -n hermes-lair -f
 ```bash
 kubectl logs deploy/searxng -n sear-search -f
 ```
+```bash
+kubectl logs deploy/obsidian-knowledge -n knowledge -f
+```
 
 -These commands are to watch the rolling logs as each service comes up
 
@@ -377,6 +415,5 @@ kubectl logs deploy/searxng -n sear-search -f
 > Sudo prefix may be required when running kubectl commands depending on your root access.
 
 ## What's next 4.0
-- Convert the raw manifests into Helm charts split by what they do (inference, hermes, knowledge, searxng, platform)
 - A Forgejo Actions runner for Hermes's org
 - Argo CD pulling this repo from Forgejo so the cluster deploys itself from git
