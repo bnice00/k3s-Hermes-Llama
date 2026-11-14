@@ -1,0 +1,27 @@
+image:
+  repository: searxng/searxng
+  tag: latest
+  digest: "sha256:048e613ce4a7ddc35dfb05a0b8ede795a054187b3c3b89518adc37d5e03a8297"
+replicas: 1
+containerPort: 8080
+service:
+  name: sear-serve
+  port: 8181
+secretName: searxng-secret   # created out of band, not in the chart
+resources: {}
+ingress:
+  enabled: true
+  name: sear-ingress
+  host: searxng.a1abeachbum.com
+  clusterIssuer: cf-prod
+  tlsSecret: sear-tls
+settings: |
+  use_default_settings: true
+  server:
+    limiter: false
+    public_instance: false
+    image_proxy: false
+  search:
+    formats:
+      - html
+      - json
