@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-cpp
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" (dict "app" "llama-cpp" "root" $) | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: llama-cpp
+  template:
+    metadata:
+      labels:
+        {{- include "inference.labels" (dict "app" "llama-cpp" "root" $) | nindent 8 }}
+    spec:
+      containers:
+        - name: llama-cpp
+          image: {{ include "inference.image" .Values.llama.image | quote }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LLAMA_CACHE
+              value: /models
+          args:
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - {{ .Values.llama.port | quote }}
+            - "-hf"
+            - {{ .Values.llama.model | quote }}
+            - "-c"
+            - {{ .Values.llama.contextSize | quote }}
+            {{- range .Values.llama.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.llama.port }}
+          resources:
+            requests:
+              amd.com/gpu: {{ .Values.llama.gpus }}
+            limits:
+              amd.com/gpu: {{ .Values.llama.gpus }}
+          volumeMounts:
+            - name: models
+              mountPath: /models
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: {{ .Values.models.pvcName }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-cpp
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" (dict "app" "llama-cpp" "root" $) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: llama-cpp
+  ports:
+    - name: http
+      port: {{ .Values.llama.port }}

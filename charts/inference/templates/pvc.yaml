@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.models.pvcName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" (dict "app" "llama-cpp" "root" $) | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.models.size }}

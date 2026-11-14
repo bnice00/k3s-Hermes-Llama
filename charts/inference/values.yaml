@@ -1,0 +1,53 @@
+llama:
+  image:
+    repository: ghcr.io/ggml-org/llama.cpp
+    tag: server-vulkan
+    digest: "sha256:c2bca483108ecef319dea68533e1af25f0156108476d6ae662efe5c6d4be7f05"
+  model: "ggml-org/gemma-4-26b-a4b-it-GGUF:Q4_0"
+  contextSize: "98304"        # keep quoted
+  port: 8000
+  gpus: 1
+  extraArgs:
+    - "--jinja"
+    - "-ngl"
+    - "99"
+    - "-np"
+    - "1"
+    - "-fa"
+    - "on"
+    - "-ctk"
+    - "q8_0"
+    - "-ctv"
+    - "q8_0"
+    - "--n-predict"
+    - "8192"
+    - "--repeat-penalty"
+    - "1.1"
+    - "--repeat-last-n"
+    - "256"
+    - "--reasoning-budget"
+    - "512"
+    - "-b"                    # batch size: ~10x faster prompt processing
+    - "2048"
+    - "-ub"
+    - "2048"
+  ingress:
+    enabled: true
+    name: llama-ingress
+    host: llama.a1abeachbum.com
+    clusterIssuer: cf-prod
+    tlsSecret: llama-tls
+
+whisper:
+  image:
+    repository: a1abeachbum/whispervulkan-server
+    tag: ""
+    digest: "sha256:9694aac7a2b94f1d12254897ba1decf2da0bdd7dffe8c251791887feb122904c"
+  node: beachbumserve
+  renderGroup: 991
+  port: 8080
+  model: /app/models/ggml-large-v3-turbo.bin
+
+models:
+  pvcName: models
+  size: 32Gi

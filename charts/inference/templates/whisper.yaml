@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whisper
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" (dict "app" "whisper" "root" $) | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: whisper
+  template:
+    metadata:
+      labels:
+        {{- include "inference.labels" (dict "app" "whisper" "root" $) | nindent 8 }}
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.whisper.node }}
+      securityContext:
+        supplementalGroups: [{{ .Values.whisper.renderGroup }}]
+      containers:
+        - name: whispervulkan-server
+          image: {{ include "inference.image" .Values.whisper.image | quote }}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          args:
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - {{ .Values.whisper.port | quote }}
+            - "--model"
+            - {{ .Values.whisper.model | quote }}
+            - "--inference-path"
+            - "/v1/audio/transcriptions"
+            - "--convert"
+            - "--tmp-dir"
+            - "/tmp"
+          ports:
+            - containerPort: {{ .Values.whisper.port }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.whisper.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 6
+          volumeMounts:
+            - name: dri
+              mountPath: /dev/dri
+      volumes:
+        - name: dri
+          hostPath:
+            path: /dev/dri
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whisper
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" (dict "app" "whisper" "root" $) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: whisper
+  ports:
+    - name: http
+      port: {{ .Values.whisper.port }}

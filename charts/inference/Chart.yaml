@@ -1,0 +1,5 @@
+apiVersion: v2
+name: inference
+description: llama.cpp (Vulkan) LLM server + whisper.cpp STT
+type: application
+version: 0.1.0

@@ -1,0 +1,30 @@
+{{- with .Values.llama.ingress }}
+{{- if .enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "inference.labels" (dict "app" "llama-cpp" "root" $) | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .clusterIssuer }}
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - {{ .host }}
+      secretName: {{ .tlsSecret }}
+  rules:
+    - host: {{ .host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: llama-cpp
+                port:
+                  number: {{ $.Values.llama.port }}
+{{- end }}
+{{- end }}
