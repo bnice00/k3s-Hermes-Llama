@@ -144,8 +144,6 @@ in this repo is exposed to the internet, and I use Tailscale to reach it when I'
 Hermes and its sandbox both run behind NetworkPolicies that deny everything by default (charts/hermes/templates/netpol-hermes.yaml, netpol-deb-slim.yaml). Hermes can only reach DNS, the sandbox over SSH,
 the internet with all private ranges blocked, llama.cpp, whisper, SearXNG, Firecrawl and the TTS rig. The sandbox is blocked from my LAN and can reach Forgejo for git.
 
-One thing that tripped me up: NetworkPolicy ports are the pod's port, not the Service port, because the policy gets checked after the Service translates it. SearXNG's Service is on 8181 but the policy has to allow 8080.
-
 
 ### Hermes git workflow 1.5
 Hermes works issues from Forgejo with a skill I wrote: clone, branch, commit, push, then open a PR with tea. Branch protection on main means I review and merge everything. I tested it end to end on local Gemma and it ran clean.
