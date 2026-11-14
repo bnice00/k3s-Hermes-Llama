@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deb-slim-net
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "deb-slim" "root" $) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: deb-slim
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: hermes
+      ports:
+        - { protocol: TCP, port: 22 }
+  egress:
+    - to:                                   # internet, LAN blocked
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12]
+      ports:
+        - { protocol: TCP, port: 80 }
+        - { protocol: TCP, port: 443 }
+    - to:                                   # DNS
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - { protocol: TCP, port: 53 }
+        - { protocol: UDP, port: 53 }
+    - to:                                   # Forgejo (pod ports)
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: forgejo
+          podSelector:
+            matchLabels:
+              app: forgejo
+      ports:
+        - { protocol: TCP, port: 2222 }
+        - { protocol: TCP, port: 3000 }

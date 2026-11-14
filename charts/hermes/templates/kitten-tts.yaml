@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kitten-tts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "kitten-tts" "root" $) | nindent 4 }}
+spec:                        # no selector: endpoints from below
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.kittenTts.port }}
+      targetPort: {{ .Values.kittenTts.port }}
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: kitten-tts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    kubernetes.io/service-name: kitten-tts     # link to service
+    {{- include "hermes.labels" (dict "app" "kitten-tts" "root" $) | nindent 4 }}
+addressType: IPv4
+ports:
+  - name: http
+    protocol: TCP
+    port: {{ .Values.kittenTts.port }}
+endpoints:
+  - addresses:
+      - {{ .Values.kittenTts.address | quote }}
+    conditions:
+      ready: true

@@ -1,0 +1,93 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hermes-isolation
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "hermes" "root" $) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: hermes
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:                                 # Traefik only
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - { protocol: TCP, port: {{ .Values.hermes.dashPort }} }
+        - { protocol: TCP, port: {{ .Values.hermes.apiPort }} }
+  egress:
+    - to:                                   # DNS
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - to:                                   # sandbox
+        - podSelector:
+            matchLabels:
+              app: deb-slim
+      ports:
+        - { protocol: TCP, port: 22 }
+    - to:                                   # internet, LAN blocked
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254/32]
+      ports:
+        - { protocol: TCP, port: 80 }
+        - { protocol: TCP, port: 443 }
+        - { protocol: TCP, port: 8443 }
+        # Discord voice/video ranges (subject to change)
+        - { protocol: UDP, port: 50000, endPort: 50032 }
+        - { protocol: UDP, port: 19294, endPort: 19344 }
+        - { protocol: TCP, port: 2000, endPort: 2099 }
+    - to:                                   # llama.cpp
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: llama-farm
+          podSelector:
+            matchLabels:
+              app: llama-cpp
+      ports:
+        - { protocol: TCP, port: 8000 }
+    - to:                                   # whisper
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: llama-farm
+          podSelector:
+            matchLabels:
+              app: whisper
+      ports:
+        - { protocol: TCP, port: 8080 }
+    - to:                                   # KittenTTS on the gaming rig
+        - ipBlock:
+            cidr: {{ .Values.kittenTts.address }}/32
+      ports:
+        - { protocol: TCP, port: {{ .Values.kittenTts.port }} }
+    - to:                                   # SearXNG
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: sear-search
+          podSelector:
+            matchLabels:
+              app: searxng
+      ports:
+        - { protocol: TCP, port: 8080 }
+    - to:                                   # Firecrawl
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: firecrawl
+          podSelector:
+            matchLabels:
+              app: firecrawl-api
+      ports:
+        - { protocol: TCP, port: 3002 }

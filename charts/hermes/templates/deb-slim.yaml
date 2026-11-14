@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: deb-slim
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "deb-slim" "root" $) | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: deb-slim          # immutable; leftover name, from og deploy
+  selector:
+    matchLabels:
+      app: deb-slim
+  template:
+    metadata:
+      labels:
+        {{- include "hermes.labels" (dict "app" "deb-slim" "root" $) | nindent 8 }}
+    spec:
+      containers:
+        - name: deb-slim
+          image: {{ include "hermes.image" .Values.debSlim.image | quote }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: {{ .Values.timezone | quote }}
+          ports:
+            - containerPort: 22
+          volumeMounts:
+            - name: hermes-data
+              mountPath: /home/hermes-agent/vault
+              subPath: vaults
+            - name: hermes-data
+              mountPath: /home/hermes-agent/data
+              subPath: data
+            - name: forgejo-creds
+              mountPath: /etc/hermes-forgejo
+              readOnly: true
+      volumes:
+        - name: hermes-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.data.pvcName }}
+        - name: forgejo-creds
+          secret:
+            secretName: {{ .Values.debSlim.forgejoSecret }}
+            defaultMode: 0400
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deb-serve
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "deb-slim" "root" $) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: deb-slim
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: 22

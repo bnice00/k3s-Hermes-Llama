@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermes
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "hermes" "root" $) | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hermes
+  template:
+    metadata:
+      labels:
+        {{- include "hermes.labels" (dict "app" "hermes" "root" $) | nindent 8 }}
+    spec:
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: ["obsidian"]
+                topologyKey: kubernetes.io/hostname
+      securityContext:
+        fsGroup: 10000
+      containers:
+        - name: hermes-kubectl
+          image: {{ include "hermes.image" .Values.hermes.image | quote }}
+          args: ["gateway", "run"]
+          env:
+            - name: API_SERVER_ENABLED
+              value: "true"
+            - name: API_SERVER_HOST
+              value: "0.0.0.0"
+            - name: HERMES_DASHBOARD
+              value: "1"
+            - name: HERMES_DASHBOARD_HOST
+              value: "0.0.0.0"
+            - name: HERMES_GATEWAY_SSH_STRICT_HOST_KEY_CHECKING
+              value: "no"
+            - name: HERMES_WRITE_SAFE_ROOT
+              value: "/opt/data:/home/hermes-agent/vault"
+            - name: TMPDIR
+              value: "/opt/data/tmp"
+            - name: TZ
+              value: {{ .Values.timezone | quote }}
+          volumeMounts:
+            - name: hermes-data
+              mountPath: /opt/data
+            - name: ssh-key
+              mountPath: /etc/hermes-ssh
+              readOnly: true
+      volumes:
+        - name: hermes-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.data.pvcName }}
+        - name: ssh-key
+          secret:
+            secretName: {{ .Values.hermes.sshKeySecret }}
+            defaultMode: 0440
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hermes-serve
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "hermes" "root" $) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: hermes
+  ports:
+    - name: openapi
+      port: {{ .Values.hermes.apiPort }}
+    - name: dash
+      port: {{ .Values.hermes.dashPort }}

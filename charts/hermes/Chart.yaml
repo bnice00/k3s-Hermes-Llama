@@ -1,0 +1,5 @@
+apiVersion: v2
+name: hermes
+description: Hermes agent, deb-slim sandbox, network policies, off-cluster TTS pointer
+type: application
+version: 0.1.0

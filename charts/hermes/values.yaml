@@ -1,0 +1,31 @@
+timezone: America/New_York
+
+data:
+  pvcName: hermes-data      # shared with obsidian/syncthing (knowledge chart references it)
+  size: 20Gi
+  storageClass: local-path
+
+hermes:
+  image:
+    repository: a1abeachbum/hermes-kubectl
+    tag: ""
+    digest: "sha256:48114aeae71fd08523c40e3f0c30360e3aff6a87ca44088d4423c67ec5aec59a"
+  sshKeySecret: hermes-ssh-key
+  apiPort: 8642
+  dashPort: 9119
+  ingress:
+    enabled: true
+    host: hermes.a1abeachbum.com
+    clusterIssuer: cf-prod
+    tlsSecret: hermes-tls
+
+debSlim:
+  image:
+    repository: a1abeachbum/deb-slim-ssh
+    tag: ""
+    digest: "sha256:cda793015aa58ed37af5a01c5b0c726197f7c2b34bee36a0c143b80b7dfefad0"
+  forgejoSecret: hermes-forgejo
+
+kittenTts:                  # runs in podman on my gaming rig, not in the cluster
+  address: 192.168.4.116
+  port: 8000

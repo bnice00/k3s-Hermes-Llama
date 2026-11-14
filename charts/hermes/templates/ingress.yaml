@@ -1,0 +1,30 @@
+{{- with .Values.hermes.ingress }}
+{{- if .enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hermes-ingress
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "hermes.labels" (dict "app" "hermes" "root" $) | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .clusterIssuer }}
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - {{ .host }}
+      secretName: {{ .tlsSecret }}
+  rules:
+    - host: {{ .host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hermes-serve
+                port:
+                  number: {{ $.Values.hermes.dashPort }}
+{{- end }}
+{{- end }}
