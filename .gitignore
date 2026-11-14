@@ -8,6 +8,6 @@ __pycache__/
 .env
 .pytest_cache/
 .DS_Store
-
+manifests/
 secrets/*.yaml
 !secrets/*.example.yaml
