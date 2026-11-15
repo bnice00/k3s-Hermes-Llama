@@ -23,7 +23,7 @@ debSlim:
   image:
     repository: a1abeachbum/deb-slim-ssh
     tag: ""
-    digest: "sha256:cda793015aa58ed37af5a01c5b0c726197f7c2b34bee36a0c143b80b7dfefad0"
+    digest: "sha256:f33b671b0cbaac79dfba8eadb5e732ab96204ad5e4cee5b78795b06e8c0cf2c4"
   forgejoSecret: hermes-forgejo
 
 kittenTts:                  # runs in podman on my gaming rig, not in the cluster
