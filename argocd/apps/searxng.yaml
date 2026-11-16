@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: searxng
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ssh://git@forgejo-ssh.forgejo.svc.cluster.local/brock/k3s-Hermes-Llama.git
+    targetRevision: main
+    path: charts/searxng
+    helm:
+      releaseName: searxng
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sear-search
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
