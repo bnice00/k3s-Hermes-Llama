@@ -32,6 +32,9 @@ gitea:
     email: you@example.com
     passwordMode: initialOnlyNoReset
   config:
+    repository:
+      ENABLE_PUSH_CREATE_USER: true
+      DEFAULT_PUSH_CREATE_PRIVATE: true
     server:
       DOMAIN: git.a1abeachbum.com
       ROOT_URL: https://git.a1abeachbum.com/

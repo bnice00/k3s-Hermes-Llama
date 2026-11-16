@@ -1,0 +1,23 @@
+global:
+  domain: argocd.a1abeachbum.com
+  nodeSelector:
+    kubernetes.io/hostname: beachbumhq
+
+configs:
+  params:
+    server.insecure: true
+  ssh:
+    extraHosts: |
+      forgejo-ssh.forgejo.svc.cluster.local ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDBdu7AT1AkyyOVG/dYdPhW6bV8pUDK9o1yoWTwQ2K7DPhanY1wf/RbFRJBjGazo07Tmb/9UPGhNGl1JlqeZ0KCJzhGDK7/MkCcNtUT1x8ktB7faaRl+Mp1jkEHgAPByrBhcc0F7uQA6M68S7sVlIGlF8yQeqClNzL6Q2LKKNPYSAHJN2nJvhY21XMQA6aAhj89U5FIA2XahySVB8bTbCCg/cll2E2mHwm6lWNqS9J4MigV5qNyhIeHX66eOQ4TOoZCBx8aoqqZyEltTxTj5v7ezE92Qo2hdqJoeMuC7bD9nhjaDLmlVY9Q1ya8SrzYTS81inJKMz53N626SuBR3Q+oX/hXdXxh3dkdDyw8zfIkeHHFwpu17GqjSRQcVqHTdvzXMNRFOpXu7ZkG8iRIXssuDobZ0efXnITtmExBUFSA+SQTBEnMjPfAMDYhiY9hweMCAt4EWCrpGXuwotXM5vbFLI2UPn6YVLmncoPTGMxelI9e1GdUAITyvTCaHyFrQyf6fkojvmlIgYnshwp0ahd9H/smuNvoOL7Cp+a7T/hLFWiacr2RNgUgZRWcy3mFuppr0EsLXGurkDDiV6Z67l9Ic71b/vBCEf8Q/8Mt2YIOY94YQnHEk1fA6Smrnncj+VPHLTHlgKNKMyS0AKMbVNhy4A2P81px66XR3ol0/1OC1Q==
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      cert-manager.io/cluster-issuer: cf-prod
+    tls: true
+
+dex:
+  enabled: false                   # no SSO
+notifications:
+  enabled: false

@@ -9,6 +9,7 @@ namespaces:
   llama-farm: { purpose: hermes-llama }
   monitoring: { name: monitoring }
   sear-search: {}
+  argocd: {}
 
 certIssuers:
   enabled: true            # false on a fresh cluster until cert-manager's CRDs exist
